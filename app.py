@@ -4,7 +4,7 @@ import google.generativeai as genai
 # Page setup
 st.set_page_config(page_title="Christian Companion", page_icon="✝️", layout="centered")
 
-# Custom CSS for Smooth Aesthetic UI with Bright Blue Typing Text
+# Custom CSS for High-Contrast, High-Visibility Text & Chat Input Fix
 st.markdown("""
     <style>
     /* Main Background */
@@ -22,65 +22,70 @@ st.markdown("""
         background-color: #FFFFFF !important;
         padding: 20px;
         border-radius: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         text-align: center;
         margin-bottom: 20px;
-        border: 1px solid #EFEAE4 !important;
+        border: 1px solid #D1C7BD !important;
     }
     .header-title {
-        color: #0066FF !important; /* Bright Blue */
+        color: #1E3A8A !important; /* Deep Blue */
         font-family: 'Georgia', serif;
         font-size: 24px;
         font-weight: 700;
         margin-bottom: 6px;
     }
     .header-subtitle {
-        color: #5C4B51 !important;
+        color: #374151 !important; /* Dark Gray */
         font-size: 14px;
         font-weight: 500;
     }
 
-    /* Chat Message Bubbles */
+    /* Chat Message Bubbles & Text Visibility */
     [data-testid="stChatMessage"] {
         background-color: #FFFFFF !important;
         border: 1px solid #E2DCD5 !important;
         border-radius: 16px !important;
-        color: #2C2225 !important;
+        color: #111827 !important;
         margin-bottom: 10px;
     }
     
     [data-testid="stChatMessage"] p {
-        color: #2C2225 !important;
+        color: #111827 !important;
         font-weight: 450;
     }
 
-    /* CHAT INPUT FIX: Smooth default box + Bright Blue typing text */
+    /* FIX: Chat Input Box Visibility (White Background + Dark Text) */
+    [data-testid="stChatInput"] {
+        background-color: #FFFFFF !important;
+        border-radius: 16px !important;
+        border: 1.5px solid #1E3A8A !important;
+    }
+
     [data-testid="stChatInput"] textarea {
-        color: #0066FF !important; /* Bright Blue typed text */
-        -webkit-text-fill-color: #0066FF !important; /* Force Bright Blue on iOS/Android */
-        font-weight: 600 !important;
+        background-color: #FFFFFF !important;
+        color: #111827 !important; /* Visible dark text while typing */
+        -webkit-text-fill-color: #111827 !important; /* Override mobile dark mode webkit fill */
         font-size: 16px !important;
     }
 
     /* Input Placeholder Text */
     [data-testid="stChatInput"] textarea::placeholder {
-        color: #8C9EFF !important; /* Soft muted blue placeholder */
-        -webkit-text-fill-color: #8C9EFF !important;
-        font-weight: 400 !important;
+        color: #6B7280 !important;
+        -webkit-text-fill-color: #6B7280 !important;
     }
 
     /* Quick Action & Control Buttons */
     .stButton > button {
         border-radius: 14px !important;
         background-color: #FFFFFF !important;
-        color: #0066FF !important; /* Bright Blue */
-        border: 1.5px solid #0066FF !important;
+        color: #1E3A8A !important;
+        border: 1.5px solid #1E3A8A !important;
         font-weight: 600 !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03) !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.04) !important;
     }
     .stButton > button:hover {
-        background-color: #F0F5FF !important;
-        color: #0052CC !important;
+        background-color: #EFF6FF !important;
+        color: #1D4ED8 !important;
     }
 
     /* Hide Streamlit default header/footer padding */
@@ -121,33 +126,32 @@ Key Guidelines:
 6. Maintain a warm, compassionate, humble, and respectful tone at all times.
 """
 
-# Function to dynamically select an active model with fallback on quota limits
-def get_model():
-    # Priority list of models to try
+# Function to generate response with automatic model fallback
+def generate_response_with_fallback(messages, prompt):
     preferred_models = [
-        "models/gemini-3.6-flash",
-        "models/gemini-2.5-flash",
-        "models/gemini-1.5-flash",
         "gemini-3.6-flash",
         "gemini-2.5-flash",
         "gemini-1.5-flash"
     ]
     
-    try:
-        available = [
-            m.name for m in genai.list_models() 
-            if 'generateContent' in m.supported_generation_methods
-        ]
-        for model_name in preferred_models:
-            if model_name in available:
-                return genai.GenerativeModel(model_name=model_name, system_instruction=SYSTEM_PROMPT)
-    except Exception as e:
-            if "429" in str(e) or "quota" in str(e).lower():
-                st.error("⏳ You've reached the free daily message limit for this model today! Please try again tomorrow or switch API keys.")
-            else:
-                st.error(f"Error communicating with Gemini: {e}")
+    last_error = None
     
-    return genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=SYSTEM_PROMPT)
+    for model_name in preferred_models:
+        try:
+            model = genai.GenerativeModel(model_name=model_name, system_instruction=SYSTEM_PROMPT)
+            chat = model.start_chat(history=messages[:-1])
+            response = chat.send_message(prompt)
+            return response.text
+        except Exception as e:
+            last_error = e
+            # If it's a quota error (429), loop to try the next model in preferred_models
+            if "429" in str(e) or "quota" in str(e).lower():
+                continue
+            else:
+                raise e
+                
+    # If all models failed due to quota limit:
+    raise last_error
 
 # Initialize message history
 if "messages" not in st.session_state:
@@ -206,12 +210,12 @@ if prompt_to_send:
 
     with st.chat_message("assistant", avatar="🕊️"):
         try:
-            model = get_model()
-            chat = model.start_chat(history=st.session_state.messages[:-1])
-            response = chat.send_message(prompt_to_send)
-            
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "model", "parts": [response.text]})
+            response_text = generate_response_with_fallback(st.session_state.messages, prompt_to_send)
+            st.markdown(response_text)
+            st.session_state.messages.append({"role": "model", "parts": [response_text]})
             st.rerun()
         except Exception as e:
-            st.error(f"Error communicating with Gemini: {e}")
+            if "429" in str(e) or "quota" in str(e).lower():
+                st.info("🌸 **A gentle reminder:** You've reached your free daily message limit across all models today. Take a quiet moment to reflect on today's scripture, and let's continue our conversation tomorrow! 🕊️")
+            else:
+                st.error(f"Error communicating with Gemini: {e}")
