@@ -33,7 +33,7 @@ Key Guidelines:
 # Initialize Gemini Chat Session in session state
 if "chat" not in st.session_state:
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-2.5-flash",
         system_instruction=SYSTEM_PROMPT
     )
     # Start a clean chat session
