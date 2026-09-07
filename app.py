@@ -4,7 +4,7 @@ import google.generativeai as genai
 # Page setup
 st.set_page_config(page_title="Christian Companion", page_icon="✝️", layout="centered")
 
-# Custom CSS for High-Contrast, High-Visibility Text
+# Custom CSS for High-Contrast, High-Visibility Text & Chat Input Fix
 st.markdown("""
     <style>
     /* Main Background */
@@ -12,7 +12,7 @@ st.markdown("""
         background: linear-gradient(180deg, #FAF7F2 0%, #F4EFEA 100%) !important;
     }
     
-    /* Global Text Color Overrides for Mobile Visibility */
+    /* Global Text Color Overrides */
     html, body, [class*="css"], .stMarkdown, p, span, div, label {
         color: #2C2225 !important;
     }
@@ -45,20 +45,40 @@ st.markdown("""
         background-color: #FFFFFF !important;
         border: 1px solid #E2DCD5 !important;
         border-radius: 16px !important;
-        color: #111827 !important; /* Sharp Dark Text */
+        color: #111827 !important;
         margin-bottom: 10px;
     }
     
     [data-testid="stChatMessage"] p {
-        color: #111827 !important; /* Ensures chat body text is dark black */
+        color: #111827 !important;
         font-weight: 450;
+    }
+
+    /* FIX: Chat Input Box Visibility (White Background + Dark Text) */
+    [data-testid="stChatInput"] {
+        background-color: #FFFFFF !important;
+        border-radius: 16px !important;
+        border: 1.5px solid #1E3A8A !important;
+    }
+
+    [data-testid="stChatInput"] textarea {
+        background-color: #FFFFFF !important;
+        color: #111827 !important; /* Visible dark text while typing */
+        -webkit-text-fill-color: #111827 !important; /* Override mobile dark mode webkit fill */
+        font-size: 16px !important;
+    }
+
+    /* Input Placeholder Text */
+    [data-testid="stChatInput"] textarea::placeholder {
+        color: #6B7280 !important;
+        -webkit-text-fill-color: #6B7280 !important;
     }
 
     /* Quick Action & Control Buttons */
     .stButton > button {
         border-radius: 14px !important;
         background-color: #FFFFFF !important;
-        color: #1E3A8A !important; /* Deep Blue Text for buttons */
+        color: #1E3A8A !important;
         border: 1.5px solid #1E3A8A !important;
         font-weight: 600 !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.04) !important;
