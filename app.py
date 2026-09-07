@@ -2,9 +2,67 @@ import streamlit as st
 import google.generativeai as genai
 
 # Page setup
-st.set_page_config(page_title="Christian Companion", page_icon="✝️")
-st.title("✝️ Christian Faith & Comfort Companion")
-st.caption("A space for biblical encouragement, guidance, and prayer.")
+st.set_page_config(page_title="Christian Companion", page_icon="✝️", layout="centered")
+
+# Custom CSS for Cute & Warm UI Styling
+st.markdown("""
+    <style>
+    /* Main Background Gradient */
+    .stApp {
+        background: linear-gradient(180deg, #FAF7F2 0%, #F4EFEA 100%);
+    }
+    
+    /* Header Card */
+    .header-card {
+        background-color: #FFFFFF;
+        padding: 20px;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        text-align: center;
+        margin-bottom: 20px;
+        border: 1px solid #EFEAE4;
+    }
+    .header-title {
+        color: #5C4B51;
+        font-family: 'Georgia', serif;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    .header-subtitle {
+        color: #8C7B83;
+        font-size: 13px;
+    }
+
+    /* Style Quick Action Buttons */
+    .stButton > button {
+        border-radius: 14px !important;
+        background-color: #FFFFFF !important;
+        color: #5C4B51 !important;
+        border: 1px solid #E2DCD5 !important;
+        font-weight: 500 !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button:hover {
+        background-color: #F8F3EE !important;
+        border-color: #D4C9BF !important;
+        transform: translateY(-1px);
+    }
+
+    /* Hide Streamlit default header/footer padding for cleaner mobile feel */
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
+
+# Header Display
+st.markdown("""
+    <div class="header-card">
+        <div class="header-title">✝️ Christian Companion</div>
+        <div class="header-subtitle">A quiet space for grace, scripture, and daily prayer</div>
+    </div>
+""", unsafe_allow_html=True)
 
 # Retrieve API Key automatically from Streamlit Secrets or sidebar input
 api_key = st.secrets.get("GEMINI_API_KEY") or st.sidebar.text_input("Enter Gemini API Key", type="password")
@@ -48,7 +106,8 @@ def get_model():
     return genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=SYSTEM_PROMPT)
 
 # Sidebar Clear Chat Button
-if st.sidebar.button("🗑️ Clear Chat History", use_container_width=True):
+st.sidebar.markdown("### ⚙️ Menu")
+if st.sidebar.button("🗑️ Clear Chat", use_container_width=True):
     st.session_state.messages = [
         {
             "role": "model",
@@ -69,12 +128,12 @@ if "messages" not in st.session_state:
 # Display past messages
 for msg in st.session_state.messages:
     role = "assistant" if msg["role"] == "model" else "user"
-    with st.chat_message(role):
+    avatar = "🕊️" if role == "assistant" else "🌸"
+    with st.chat_message(role, avatar=avatar):
         st.markdown(msg["parts"][0])
 
 # Quick Action Buttons
 st.markdown("---")
-st.write("✨ **Quick Requests:**")
 col1, col2, col3 = st.columns(3)
 
 prompt_to_send = None
@@ -99,10 +158,10 @@ if typed_prompt:
 # Process input (from button or text box)
 if prompt_to_send:
     st.session_state.messages.append({"role": "user", "parts": [prompt_to_send]})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="🌸"):
         st.markdown(prompt_to_send)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🕊️"):
         try:
             model = get_model()
             chat = model.start_chat(history=st.session_state.messages[:-1])
