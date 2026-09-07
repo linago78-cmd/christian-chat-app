@@ -54,7 +54,7 @@ st.markdown("""
         font-weight: 450;
     }
 
-    /* Quick Action & Sidebar Buttons */
+    /* Quick Action & Control Buttons */
     .stButton > button {
         border-radius: 14px !important;
         background-color: #FFFFFF !important;
@@ -123,17 +123,6 @@ def get_model():
     
     return genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=SYSTEM_PROMPT)
 
-# Sidebar Clear Chat Button
-st.sidebar.markdown("### ⚙️ Menu")
-if st.sidebar.button("🗑️ Clear Chat", use_container_width=True):
-    st.session_state.messages = [
-        {
-            "role": "model",
-            "parts": ["Grace and peace to you! I am here to listen, offer biblical encouragement, pray with you, or walk through whatever is on your heart today. How can I support you right now?"]
-        }
-    ]
-    st.rerun()
-
 # Initialize message history
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -150,23 +139,33 @@ for msg in st.session_state.messages:
     with st.chat_message(role, avatar=avatar):
         st.markdown(msg["parts"][0])
 
-# Quick Action Buttons
+# Quick Action & Clear Chat Buttons
 st.markdown("---")
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 prompt_to_send = None
 
 with col1:
-    if st.button("📖 Daily Verse", use_container_width=True):
+    if st.button("📖 Verse", use_container_width=True):
         prompt_to_send = "Please share an encouraging Bible verse from the NIV translation for today, along with a short reflection on how to apply it."
 
 with col2:
-    if st.button("🙏 Pray with Me", use_container_width=True):
+    if st.button("🙏 Pray", use_container_width=True):
         prompt_to_send = "Please write a heartfelt prayer for peace, wisdom, and strength today."
 
 with col3:
-    if st.button("🕊️ Seek Comfort", use_container_width=True):
+    if st.button("🕊️ Comfort", use_container_width=True):
         prompt_to_send = "I am feeling overwhelmed today. Please share some biblical encouragement and comfort from the NIV scriptures."
+
+with col4:
+    if st.button("🗑️ Clear", use_container_width=True):
+        st.session_state.messages = [
+            {
+                "role": "model",
+                "parts": ["Grace and peace to you! I am here to listen, offer biblical encouragement, pray with you, or walk through whatever is on your heart today. How can I support you right now?"]
+            }
+        ]
+        st.rerun()
 
 # Capture typed input if no button was clicked
 typed_prompt = st.chat_input("Share what's on your mind...")
