@@ -30,6 +30,26 @@ Key Guidelines:
 6. Frequently incorporate relevant Bible verses to support your points.
 """
 
+# Function to dynamically select an active model
+def get_model():
+    # Attempt to list active models from Google API
+    try:
+        available = [
+            m.name for m in genai.list_models() 
+            if 'generateContent' in m.supported_generation_methods
+        ]
+        # Check for latest flash models in preference order
+        for preferred in ["models/gemini-3.6-flash", "models/gemini-2.5-flash", "gemini-3.6-flash", "gemini-2.5-flash"]:
+            if preferred in available:
+                return genai.GenerativeModel(model_name=preferred, system_instruction=SYSTEM_PROMPT)
+        if available:
+            return genai.GenerativeModel(model_name=available[0], system_instruction=SYSTEM_PROMPT)
+    except Exception:
+        pass
+    
+    # Direct fallback if listing models is restricted
+    return genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=SYSTEM_PROMPT)
+
 # Initialize message history list
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -55,13 +75,9 @@ if prompt := st.chat_input("Share what's on your mind..."):
     # Generate assistant response
     with st.chat_message("assistant"):
         try:
-            # Using updated Gemini 2.5 Flash model
-            model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash",
-                system_instruction=SYSTEM_PROMPT
-            )
+            model = get_model()
             
-            # Pass past message history (excluding the very last prompt added)
+            # Pass past message history (excluding current user prompt)
             chat = model.start_chat(history=st.session_state.messages[:-1])
             response = chat.send_message(prompt)
             
