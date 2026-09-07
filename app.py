@@ -121,22 +121,33 @@ Key Guidelines:
 6. Maintain a warm, compassionate, humble, and respectful tone at all times.
 """
 
-# Function to dynamically select an active model
+# Function to dynamically select an active model with fallback on quota limits
 def get_model():
+    # Priority list of models to try
+    preferred_models = [
+        "models/gemini-3.6-flash",
+        "models/gemini-2.5-flash",
+        "models/gemini-1.5-flash",
+        "gemini-3.6-flash",
+        "gemini-2.5-flash",
+        "gemini-1.5-flash"
+    ]
+    
     try:
         available = [
             m.name for m in genai.list_models() 
             if 'generateContent' in m.supported_generation_methods
         ]
-        for preferred in ["models/gemini-3.6-flash", "models/gemini-2.5-flash", "gemini-3.6-flash", "gemini-2.5-flash"]:
-            if preferred in available:
-                return genai.GenerativeModel(model_name=preferred, system_instruction=SYSTEM_PROMPT)
-        if available:
-            return genai.GenerativeModel(model_name=available[0], system_instruction=SYSTEM_PROMPT)
-    except Exception:
-        pass
+        for model_name in preferred_models:
+            if model_name in available:
+                return genai.GenerativeModel(model_name=model_name, system_instruction=SYSTEM_PROMPT)
+    except Exception as e:
+            if "429" in str(e) or "quota" in str(e).lower():
+                st.error("⏳ You've reached the free daily message limit for this model today! Please try again tomorrow or switch API keys.")
+            else:
+                st.error(f"Error communicating with Gemini: {e}")
     
-    return genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=SYSTEM_PROMPT)
+    return genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=SYSTEM_PROMPT)
 
 # Initialize message history
 if "messages" not in st.session_state:
