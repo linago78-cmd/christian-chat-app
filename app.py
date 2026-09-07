@@ -127,12 +127,12 @@ Key Guidelines:
 6. Maintain a warm, compassionate, humble, and respectful tone at all times.
 """
 
-# Function to generate response with automatic model fallback
+# Function to generate response with robust model fallback
 def generate_response_with_fallback(messages, prompt):
     preferred_models = [
         "gemini-3.6-flash",
-        "gemini-2.5-flash",
-        "gemini-1.5-flash"
+        "gemini-1.5-flash",
+        "gemini-1.5-pro"
     ]
     
     last_error = None
@@ -145,13 +145,14 @@ def generate_response_with_fallback(messages, prompt):
             return response.text
         except Exception as e:
             last_error = e
-            # If it's a quota error (429), try the next model
-            if "429" in str(e) or "quota" in str(e).lower():
+            err_str = str(e).lower()
+            # Catch both quota (429) and not-found/deprecated (404) errors to continue fallback
+            if "429" in err_str or "quota" in err_str or "404" in err_str or "not found" in err_str:
                 continue
             else:
                 raise e
                 
-    # If all models hit quota limit:
+    # If all models fail:
     raise last_error
 
 # Initialize message history
