@@ -4,7 +4,7 @@ import google.generativeai as genai
 # Page setup
 st.set_page_config(page_title="Christian Companion", page_icon="✝️", layout="centered")
 
-# Custom CSS for High-Contrast, High-Visibility Text & Chat Input Fix
+# Custom CSS for High-Contrast, High-Visibility Text & Customized Chat Input
 st.markdown("""
     <style>
     /* Main Background */
@@ -54,24 +54,25 @@ st.markdown("""
         font-weight: 450;
     }
 
-    /* FIX: Chat Input Box Visibility (White Background + Dark Text) */
+    /* CHAT INPUT FIX: Black Textbox + Bright Blue Text */
     [data-testid="stChatInput"] {
-        background-color: #FFFFFF !important;
+        background-color: #000000 !important;
         border-radius: 16px !important;
         border: 1.5px solid #1E3A8A !important;
     }
 
     [data-testid="stChatInput"] textarea {
-        background-color: #FFFFFF !important;
-        color: #111827 !important; /* Visible dark text while typing */
-        -webkit-text-fill-color: #111827 !important; /* Override mobile dark mode webkit fill */
+        background-color: #000000 !important;
+        color: #2563EB !important; /* Bright Blue Text while typing */
+        -webkit-text-fill-color: #2563EB !important; /* Forces bright blue on mobile */
         font-size: 16px !important;
+        font-weight: 600 !important;
     }
 
     /* Input Placeholder Text */
     [data-testid="stChatInput"] textarea::placeholder {
-        color: #6B7280 !important;
-        -webkit-text-fill-color: #6B7280 !important;
+        color: #9CA3AF !important;
+        -webkit-text-fill-color: #9CA3AF !important;
     }
 
     /* Quick Action & Control Buttons */
@@ -144,13 +145,13 @@ def generate_response_with_fallback(messages, prompt):
             return response.text
         except Exception as e:
             last_error = e
-            # If it's a quota error (429), loop to try the next model in preferred_models
+            # If it's a quota error (429), try the next model
             if "429" in str(e) or "quota" in str(e).lower():
                 continue
             else:
                 raise e
                 
-    # If all models failed due to quota limit:
+    # If all models hit quota limit:
     raise last_error
 
 # Initialize message history
