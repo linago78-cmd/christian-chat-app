@@ -16,6 +16,24 @@ if not api_key:
 # Configure Gemini API
 genai.configure(api_key=api_key)
 
+# Function to dynamically pick a valid available model
+@st.cache_resource
+def get_working_model_name():
+    try:
+        available_models = [
+            m.name for m in genai.list_models() 
+            if 'generateContent' in m.supported_generation_methods
+        ]
+        # Prefer gemini-1.5-flash or gemini-2.0-flash if listed
+        for preferred in ["models/gemini-1.5-flash", "models/gemini-2.0-flash", "models/gemini-1.5-pro"]:
+            if preferred in available_models:
+                return preferred
+        if available_models:
+            return available_models[0]
+    except Exception:
+        pass
+    return "gemini-1.5-flash-latest"
+
 # System Prompt defining the bot's persona and behavior
 SYSTEM_PROMPT = """
 You are a loving, wise, and deeply grounded Christian mentor and companion. 
@@ -32,14 +50,13 @@ Key Guidelines:
 
 # Initialize Gemini Chat Session in session state
 if "chat" not in st.session_state:
+    model_name = get_working_model_name()
     model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
+        model_name=model_name,
         system_instruction=SYSTEM_PROMPT
     )
-    # Start a clean chat session
     st.session_state.chat = model.start_chat(history=[])
     
-    # Store UI message display history
     st.session_state.display_messages = [
         {
             "role": "assistant",
@@ -64,7 +81,6 @@ if prompt := st.chat_input("Share what's on your mind..."):
         try:
             response = st.session_state.chat.send_message(prompt)
             st.markdown(response.text)
-            # Store assistant response in display history
             st.session_state.display_messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
             st.error(f"Error communicating with Gemini: {e}")
