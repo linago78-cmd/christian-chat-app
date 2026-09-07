@@ -47,6 +47,16 @@ def get_model():
     
     return genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=SYSTEM_PROMPT)
 
+# Sidebar Clear Chat Button
+if st.sidebar.button("🗑️ Clear Chat History", use_container_width=True):
+    st.session_state.messages = [
+        {
+            "role": "model",
+            "parts": ["Grace and peace to you! I am here to listen, offer biblical encouragement, pray with you, or walk through whatever is on your heart today. How can I support you right now?"]
+        }
+    ]
+    st.rerun()
+
 # Initialize message history
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -62,19 +72,44 @@ for msg in st.session_state.messages:
     with st.chat_message(role):
         st.markdown(msg["parts"][0])
 
-# Process user input
-if prompt := st.chat_input("Share what's on your mind..."):
-    st.session_state.messages.append({"role": "user", "parts": [prompt]})
+# Quick Action Buttons
+st.markdown("---")
+st.write("✨ **Quick Requests:**")
+col1, col2, col3 = st.columns(3)
+
+prompt_to_send = None
+
+with col1:
+    if st.button("📖 Daily Verse", use_container_width=True):
+        prompt_to_send = "Please share an encouraging Bible verse from the NIV translation for today, along with a short reflection on how to apply it."
+
+with col2:
+    if st.button("🙏 Pray with Me", use_container_width=True):
+        prompt_to_send = "Please write a heartfelt prayer for peace, wisdom, and strength today."
+
+with col3:
+    if st.button("🕊️ Seek Comfort", use_container_width=True):
+        prompt_to_send = "I am feeling overwhelmed today. Please share some biblical encouragement and comfort from the NIV scriptures."
+
+# Capture typed input if no button was clicked
+typed_prompt = st.chat_input("Share what's on your mind...")
+if typed_prompt:
+    prompt_to_send = typed_prompt
+
+# Process input (from button or text box)
+if prompt_to_send:
+    st.session_state.messages.append({"role": "user", "parts": [prompt_to_send]})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(prompt_to_send)
 
     with st.chat_message("assistant"):
         try:
             model = get_model()
             chat = model.start_chat(history=st.session_state.messages[:-1])
-            response = chat.send_message(prompt)
+            response = chat.send_message(prompt_to_send)
             
             st.markdown(response.text)
             st.session_state.messages.append({"role": "model", "parts": [response.text]})
+            st.rerun()
         except Exception as e:
             st.error(f"Error communicating with Gemini: {e}")
