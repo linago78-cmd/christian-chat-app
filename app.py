@@ -4,7 +4,7 @@ import google.generativeai as genai
 # Page setup
 st.set_page_config(page_title="Christian Companion", page_icon="✝️", layout="centered")
 
-# Custom CSS for High-Contrast, High-Visibility Text & Chat Input Fix
+# Custom CSS for Smooth Aesthetic UI with Bright Blue Typing Text
 st.markdown("""
     <style>
     /* Main Background */
@@ -22,70 +22,65 @@ st.markdown("""
         background-color: #FFFFFF !important;
         padding: 20px;
         border-radius: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
         text-align: center;
         margin-bottom: 20px;
-        border: 1px solid #D1C7BD !important;
+        border: 1px solid #EFEAE4 !important;
     }
     .header-title {
-        color: #1E3A8A !important; /* Deep Blue */
+        color: #0066FF !important; /* Bright Blue */
         font-family: 'Georgia', serif;
         font-size: 24px;
         font-weight: 700;
         margin-bottom: 6px;
     }
     .header-subtitle {
-        color: #374151 !important; /* Dark Gray */
+        color: #5C4B51 !important;
         font-size: 14px;
         font-weight: 500;
     }
 
-    /* Chat Message Bubbles & Text Visibility */
+    /* Chat Message Bubbles */
     [data-testid="stChatMessage"] {
         background-color: #FFFFFF !important;
         border: 1px solid #E2DCD5 !important;
         border-radius: 16px !important;
-        color: #111827 !important;
+        color: #2C2225 !important;
         margin-bottom: 10px;
     }
     
     [data-testid="stChatMessage"] p {
-        color: #111827 !important;
+        color: #2C2225 !important;
         font-weight: 450;
     }
 
-    /* FIX: Chat Input Box Visibility (White Background + Dark Text) */
-    [data-testid="stChatInput"] {
-        background-color: #FFFFFF !important;
-        border-radius: 16px !important;
-        border: 1.5px solid #1E3A8A !important;
-    }
-
+    /* CHAT INPUT FIX: Smooth default box + Bright Blue typing text */
     [data-testid="stChatInput"] textarea {
-        background-color: #FFFFFF !important;
-        color: #111827 !important; /* Visible dark text while typing */
-        -webkit-text-fill-color: #111827 !important; /* Override mobile dark mode webkit fill */
+        color: #0066FF !important; /* Bright Blue typed text */
+        -webkit-text-fill-color: #0066FF !important; /* Force Bright Blue on iOS/Android */
+        font-weight: 600 !important;
         font-size: 16px !important;
     }
 
     /* Input Placeholder Text */
     [data-testid="stChatInput"] textarea::placeholder {
-        color: #6B7280 !important;
-        -webkit-text-fill-color: #6B7280 !important;
+        color: #8C9EFF !important; /* Soft muted blue placeholder */
+        -webkit-text-fill-color: #8C9EFF !important;
+        font-weight: 400 !important;
     }
 
     /* Quick Action & Control Buttons */
     .stButton > button {
         border-radius: 14px !important;
         background-color: #FFFFFF !important;
-        color: #1E3A8A !important;
-        border: 1.5px solid #1E3A8A !important;
+        color: #0066FF !important; /* Bright Blue */
+        border: 1.5px solid #0066FF !important;
         font-weight: 600 !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.04) !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03) !important;
     }
     .stButton > button:hover {
-        background-color: #EFF6FF !important;
-        color: #1D4ED8 !important;
+        background-color: #F0F5FF !important;
+        color: #0052CC !important;
     }
 
     /* Hide Streamlit default header/footer padding */
