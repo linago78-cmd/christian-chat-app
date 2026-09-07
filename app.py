@@ -4,53 +4,71 @@ import google.generativeai as genai
 # Page setup
 st.set_page_config(page_title="Christian Companion", page_icon="✝️", layout="centered")
 
-# Custom CSS for Cute & Warm UI Styling
+# Custom CSS for High-Contrast, High-Visibility Text
 st.markdown("""
     <style>
-    /* Main Background Gradient */
+    /* Main Background */
     .stApp {
-        background: linear-gradient(180deg, #FAF7F2 0%, #F4EFEA 100%);
+        background: linear-gradient(180deg, #FAF7F2 0%, #F4EFEA 100%) !important;
     }
     
-    /* Header Card */
-    .header-card {
-        background-color: #FFFFFF;
-        padding: 20px;
-        border-radius: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-        text-align: center;
-        margin-bottom: 20px;
-        border: 1px solid #EFEAE4;
-    }
-    .header-title {
-        color: #5C4B51;
-        font-family: 'Georgia', serif;
-        font-size: 24px;
-        font-weight: 600;
-        margin-bottom: 4px;
-    }
-    .header-subtitle {
-        color: #8C7B83;
-        font-size: 13px;
+    /* Global Text Color Overrides for Mobile Visibility */
+    html, body, [class*="css"], .stMarkdown, p, span, div, label {
+        color: #2C2225 !important;
     }
 
-    /* Style Quick Action Buttons */
+    /* Header Card Styling */
+    .header-card {
+        background-color: #FFFFFF !important;
+        padding: 20px;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        margin-bottom: 20px;
+        border: 1px solid #D1C7BD !important;
+    }
+    .header-title {
+        color: #1E3A8A !important; /* Deep Blue */
+        font-family: 'Georgia', serif;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    .header-subtitle {
+        color: #374151 !important; /* Dark Gray */
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    /* Chat Message Bubbles & Text Visibility */
+    [data-testid="stChatMessage"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E2DCD5 !important;
+        border-radius: 16px !important;
+        color: #111827 !important; /* Sharp Dark Text */
+        margin-bottom: 10px;
+    }
+    
+    [data-testid="stChatMessage"] p {
+        color: #111827 !important; /* Ensures chat body text is dark black */
+        font-weight: 450;
+    }
+
+    /* Quick Action & Sidebar Buttons */
     .stButton > button {
         border-radius: 14px !important;
         background-color: #FFFFFF !important;
-        color: #5C4B51 !important;
-        border: 1px solid #E2DCD5 !important;
-        font-weight: 500 !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
-        transition: all 0.2s ease !important;
+        color: #1E3A8A !important; /* Deep Blue Text for buttons */
+        border: 1.5px solid #1E3A8A !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.04) !important;
     }
     .stButton > button:hover {
-        background-color: #F8F3EE !important;
-        border-color: #D4C9BF !important;
-        transform: translateY(-1px);
+        background-color: #EFF6FF !important;
+        color: #1D4ED8 !important;
     }
 
-    /* Hide Streamlit default header/footer padding for cleaner mobile feel */
+    /* Hide Streamlit default header/footer padding */
     header {visibility: hidden;}
     footer {visibility: hidden;}
     </style>
