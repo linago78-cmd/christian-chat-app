@@ -4,7 +4,7 @@ import google.generativeai as genai
 # Page setup
 st.set_page_config(page_title="Christian Companion", page_icon="✝️", layout="centered")
 
-# Custom CSS for High-Contrast, High-Visibility Text & Customized Chat Input
+# Custom CSS for High-Contrast Text & Customized Chat Input
 st.markdown("""
     <style>
     /* Main Background */
@@ -129,10 +129,10 @@ Key Guidelines:
 
 # Function to generate response with robust model fallback
 def generate_response_with_fallback(messages, prompt):
+    # Only active, currently supported models
     preferred_models = [
         "gemini-3.6-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
+        "gemini-2.5-pro"
     ]
     
     last_error = None
@@ -145,14 +145,10 @@ def generate_response_with_fallback(messages, prompt):
             return response.text
         except Exception as e:
             last_error = e
-            err_str = str(e).lower()
-            # Catch both quota (429) and not-found/deprecated (404) errors to continue fallback
-            if "429" in err_str or "quota" in err_str or "404" in err_str or "not found" in err_str:
-                continue
-            else:
-                raise e
+            # Automatically try the next model if the current one fails for any reason
+            continue
                 
-    # If all models fail:
+    # If every model fails, raise the last encountered error
     raise last_error
 
 # Initialize message history
