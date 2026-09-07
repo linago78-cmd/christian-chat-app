@@ -16,24 +16,6 @@ if not api_key:
 # Configure Gemini API
 genai.configure(api_key=api_key)
 
-# Function to dynamically pick a valid available model
-@st.cache_resource
-def get_working_model_name():
-    try:
-        available_models = [
-            m.name for m in genai.list_models() 
-            if 'generateContent' in m.supported_generation_methods
-        ]
-        # Prefer gemini-1.5-flash or gemini-2.0-flash if listed
-        for preferred in ["models/gemini-1.5-flash", "models/gemini-2.0-flash", "models/gemini-1.5-pro"]:
-            if preferred in available_models:
-                return preferred
-        if available_models:
-            return available_models[0]
-    except Exception:
-        pass
-    return "gemini-1.5-flash-latest"
-
 # System Prompt defining the bot's persona and behavior
 SYSTEM_PROMPT = """
 You are a loving, wise, and deeply grounded Christian mentor and companion. 
@@ -48,39 +30,42 @@ Key Guidelines:
 6. Frequently incorporate relevant Bible verses to support your points.
 """
 
-# Initialize Gemini Chat Session in session state
-if "chat" not in st.session_state:
-    model_name = get_working_model_name()
-    model = genai.GenerativeModel(
-        model_name=model_name,
-        system_instruction=SYSTEM_PROMPT
-    )
-    st.session_state.chat = model.start_chat(history=[])
-    
-    st.session_state.display_messages = [
+# Initialize message history list
+if "messages" not in st.session_state:
+    st.session_state.messages = [
         {
-            "role": "assistant",
-            "content": "Grace and peace to you! I am here to listen, offer biblical encouragement, pray with you, or walk through whatever is on your heart today. How can I support you right now?"
+            "role": "model",
+            "parts": ["Grace and peace to you! I am here to listen, offer biblical encouragement, pray with you, or walk through whatever is on your heart today. How can I support you right now?"]
         }
     ]
 
-# Display all past messages in the UI
-for msg in st.session_state.display_messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+# Display all past messages in UI
+for msg in st.session_state.messages:
+    role = "assistant" if msg["role"] == "model" else "user"
+    with st.chat_message(role):
+        st.markdown(msg["parts"][0])
 
 # Process user input
 if prompt := st.chat_input("Share what's on your mind..."):
-    # Display user message
-    st.session_state.display_messages.append({"role": "user", "content": prompt})
+    # Render user prompt
+    st.session_state.messages.append({"role": "user", "parts": [prompt]})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generate assistant response using the persistent chat session
+    # Generate assistant response
     with st.chat_message("assistant"):
         try:
-            response = st.session_state.chat.send_message(prompt)
+            # Using updated Gemini 2.5 Flash model
+            model = genai.GenerativeModel(
+                model_name="gemini-2.5-flash",
+                system_instruction=SYSTEM_PROMPT
+            )
+            
+            # Pass past message history (excluding the very last prompt added)
+            chat = model.start_chat(history=st.session_state.messages[:-1])
+            response = chat.send_message(prompt)
+            
             st.markdown(response.text)
-            st.session_state.display_messages.append({"role": "assistant", "content": response.text})
+            st.session_state.messages.append({"role": "model", "parts": [response.text]})
         except Exception as e:
             st.error(f"Error communicating with Gemini: {e}")
