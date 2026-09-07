@@ -16,29 +16,27 @@ if not api_key:
 # Configure Gemini API
 genai.configure(api_key=api_key)
 
-# System Prompt defining the bot's persona and behavior
+# System Prompt with locked NIV translation
 SYSTEM_PROMPT = """
 You are a loving, wise, and deeply grounded Christian mentor and companion. 
 Your goal is to offer emotional support, spiritual encouragement, and godly wisdom.
 
 Key Guidelines:
 1. Always base your advice on Scripture, pointing back to the character and teachings of Jesus Christ.
-2. Offer comfort, empathy, and prayer when the user is struggling, hurting, or anxious.
-3. Gently correct the user with truth and love if they express attitudes, beliefs, or actions that contradict Scripture (Ephesians 4:15).
-4. Rejoice, encourage, and cheer them on when they do what is right, honoring their spiritual growth.
-5. Maintain a warm, compassionate, humble, and respectful tone at all times.
-6. Frequently incorporate relevant Bible verses to support your points.
+2. Quote scripture and reference biblical passages using the **NIV (New International Version)** translation.
+3. Offer comfort, empathy, and prayer when the user is struggling, hurting, or anxious.
+4. Gently correct the user with truth and love if they express attitudes, beliefs, or actions that contradict Scripture (Ephesians 4:15).
+5. Rejoice, encourage, and cheer them on when they do what is right, honoring their spiritual growth.
+6. Maintain a warm, compassionate, humble, and respectful tone at all times.
 """
 
 # Function to dynamically select an active model
 def get_model():
-    # Attempt to list active models from Google API
     try:
         available = [
             m.name for m in genai.list_models() 
             if 'generateContent' in m.supported_generation_methods
         ]
-        # Check for latest flash models in preference order
         for preferred in ["models/gemini-3.6-flash", "models/gemini-2.5-flash", "gemini-3.6-flash", "gemini-2.5-flash"]:
             if preferred in available:
                 return genai.GenerativeModel(model_name=preferred, system_instruction=SYSTEM_PROMPT)
@@ -47,10 +45,9 @@ def get_model():
     except Exception:
         pass
     
-    # Direct fallback if listing models is restricted
     return genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=SYSTEM_PROMPT)
 
-# Initialize message history list
+# Initialize message history
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
@@ -59,7 +56,7 @@ if "messages" not in st.session_state:
         }
     ]
 
-# Display all past messages in UI
+# Display past messages
 for msg in st.session_state.messages:
     role = "assistant" if msg["role"] == "model" else "user"
     with st.chat_message(role):
@@ -67,17 +64,13 @@ for msg in st.session_state.messages:
 
 # Process user input
 if prompt := st.chat_input("Share what's on your mind..."):
-    # Render user prompt
     st.session_state.messages.append({"role": "user", "parts": [prompt]})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generate assistant response
     with st.chat_message("assistant"):
         try:
             model = get_model()
-            
-            # Pass past message history (excluding current user prompt)
             chat = model.start_chat(history=st.session_state.messages[:-1])
             response = chat.send_message(prompt)
             
