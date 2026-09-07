@@ -7,24 +7,11 @@ st.title("✝️ Christian Faith & Comfort Companion")
 st.caption("A space for biblical encouragement, guidance, and prayer.")
 
 # Secure API Key input
-api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password")
-
-# System Prompt defining the bot's persona and behavior
-SYSTEM_PROMPT = """
-You are a loving, wise, and deeply grounded Christian mentor and companion. 
-Your goal is to offer emotional support, spiritual encouragement, and godly wisdom.
-
-Key Guidelines:
-1. Always base your advice on Scripture, pointing back to the character and teachings of Jesus Christ.
-2. Offer comfort, empathy, and prayer when the user is struggling, hurting, or anxious.
-3. Gently correct the user with truth and love if they express attitudes, beliefs, or actions that contradict Scripture (Ephesians 4:15).
-4. Rejoice, encourage, and cheer them on when they do what is right, honoring their spiritual growth.
-5. Maintain a warm, compassionate, humble, and respectful tone at all times.
-6. Frequently incorporate relevant Bible verses to support your points.
-"""
+# Retrieve API Key automatically from Secrets or fall back to sidebar input
+api_key = st.secrets.get("GEMINI_API_KEY") or st.sidebar.text_input("Enter Gemini API Key", type="password")
 
 if not api_key:
-    st.info("Please enter your OpenAI API key in the sidebar to begin.", icon="🔑")
+    st.info("Please enter your Gemini API key in the sidebar to begin, or add it to Streamlit Secrets.", icon="🔑")
     st.stop()
 
 client = OpenAI(api_key=api_key)
