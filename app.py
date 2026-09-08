@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 
 # Page setup
 st.set_page_config(page_title="Christian Companion", page_icon="✝️", layout="centered")
@@ -128,12 +128,19 @@ Key Guidelines:
 """
 
 # Function to generate response with robust model fallback
-def generate_response_with_fallback(messages, prompt):
-    # Only active, currently supported models
-    preferred_models = [
-        "gemini-3.6-flash",
-        "gemini-2.5-pro"
-    ]
+# NEW
+def generate_response(messages, prompt):
+    client = genai.Client(api_key=api_key)
+    
+    # Pass history + system prompt in the contents request
+    response = client.models.generate_content(
+        model="models/gemini-3.6-flash",
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT
+        )
+    )
+    return response.text
     
     last_error = None
     
