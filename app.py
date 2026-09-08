@@ -1,3 +1,4 @@
+import time
 import streamlit as st
 from google import genai
 from google.genai import types
@@ -117,8 +118,33 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# Initialize Session State Variables
+if "favorites" not in st.session_state:
+    st.session_state.favorites = []
+
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {
+            "role": "model",
+            "parts": ["Grace and peace to you! I am here to listen, offer biblical encouragement, pray with you, or walk through whatever is on your heart today. How can I support you right now?"]
+        }
+    ]
+
 # Retrieve API Key automatically from Streamlit Secrets or sidebar input
 api_key = st.secrets.get("GEMINI_API_KEY") or st.sidebar.text_input("Enter Gemini API Key", type="password")
+
+# Sidebar - Favorites Section & Controls
+with st.sidebar:
+    st.header("⭐ Saved Favorites")
+    if not st.session_state.favorites:
+        st.info("No saved verses or prayers yet. Click '⭐ Save Favorite' under any response to keep it here.")
+    else:
+        for i, favorite_text in enumerate(st.session_state.favorites):
+            with st.expander(f"Saved Entry #{i + 1}", expanded=False):
+                st.write(favorite_text)
+                if st.button("🗑️ Delete", key=f"del_fav_{i}"):
+                    st.session_state.favorites.pop(i)
+                    st.rerun()
 
 if not api_key:
     st.info("Please enter your Gemini API key in the sidebar, or add GEMINI_API_KEY to Streamlit Secrets.", icon="🔑")
@@ -155,8 +181,6 @@ def format_chat_history(messages):
         )
     return formatted_contents
 
-import time
-
 # Generate response using gemini-3.6-flash with retry logic for temporary 503 high-demand errors
 def generate_response(messages):
     history_contents = format_chat_history(messages)
@@ -182,22 +206,25 @@ def generate_response(messages):
             else:
                 raise e
 
-# Initialize message history
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {
-            "role": "model",
-            "parts": ["Grace and peace to you! I am here to listen, offer biblical encouragement, pray with you, or walk through whatever is on your heart today. How can I support you right now?"]
-        }
-    ]
-
-# Display past messages
-for msg in st.session_state.messages:
+# Display past messages with "Save Favorite" option for assistant responses
+for idx, msg in enumerate(st.session_state.messages):
     role = "assistant" if msg["role"] == "model" else "user"
     avatar = "🕊️" if role == "assistant" else "🌸"
+    
     with st.chat_message(role, avatar=avatar):
         text_content = msg["parts"][0] if isinstance(msg["parts"], list) else msg["parts"]
         st.markdown(text_content)
+        
+        # Add a Save Favorite button under assistant messages
+        if role == "assistant":
+            is_already_saved = text_content in st.session_state.favorites
+            fav_label = "⭐ Saved" if is_already_saved else "⭐ Save Favorite"
+            
+            if st.button(fav_label, key=f"fav_btn_{idx}", disabled=is_already_saved):
+                if text_content not in st.session_state.favorites:
+                    st.session_state.favorites.append(text_content)
+                    st.toast("Saved to your Favorites in the sidebar!", icon="⭐")
+                    st.rerun()
 
 # Quick Action & Clear Chat Buttons
 st.markdown("---")
