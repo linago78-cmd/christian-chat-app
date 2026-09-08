@@ -1,10 +1,11 @@
 import streamlit as st
 from google import genai
+from google.genai import types
 
 # Page setup
 st.set_page_config(page_title="Christian Companion", page_icon="✝️", layout="centered")
 
-# Custom CSS for High-Contrast Text & Customized Chat Input
+# Custom CSS for High-Contrast, High-Visibility Text & Customized Chat Input
 st.markdown("""
     <style>
     /* Main Background */
@@ -110,7 +111,7 @@ if not api_key:
     st.info("Please enter your Gemini API key in the sidebar, or add GEMINI_API_KEY to Streamlit Secrets.", icon="🔑")
     st.stop()
 
-# Configure Gemini API
+# Initialize Client using the new google-genai SDK
 client = genai.Client(api_key=api_key)
 
 # System Prompt with locked NIV translation
@@ -127,33 +128,32 @@ Key Guidelines:
 6. Maintain a warm, compassionate, humble, and respectful tone at all times.
 """
 
-# Function to generate response with robust model fallback
-# NEW
-def generate_response(messages, prompt):
-    client = genai.Client(api_key=api_key)
+# Helper function to convert UI message format to google-genai Content objects
+def format_chat_history(messages):
+    formatted_contents = []
+    for msg in messages:
+        role = "user" if msg["role"] == "user" else "model"
+        text = msg["parts"][0] if isinstance(msg["parts"], list) else msg["parts"]
+        formatted_contents.append(
+            types.Content(
+                role=role,
+                parts=[types.Part.from_text(text=text)]
+            )
+        )
+    return formatted_contents
+
+# Generate response using gemini-3.6-flash via client.models.generate_content
+def generate_response(messages):
+    history_contents = format_chat_history(messages)
     
-    # Pass history + system prompt in the contents request
     response = client.models.generate_content(
-    model="gemini-3.6-flash",
-    contents="Hello"
-)
-print(response.text)
-    
-    last_error = None
-    
-    for model_name in preferred_models:
-        try:
-            model = genai.GenerativeModel(model_name=model_name, system_instruction=SYSTEM_PROMPT)
-            chat = model.start_chat(history=messages[:-1])
-            response = chat.send_message(prompt)
-            return response.text
-        except Exception as e:
-            last_error = e
-            # Automatically try the next model if the current one fails for any reason
-            continue
-                
-    # If every model fails, raise the last encountered error
-    raise last_error
+        model="gemini-3.6-flash",
+        contents=history_contents,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT
+        )
+    )
+    return response.text
 
 # Initialize message history
 if "messages" not in st.session_state:
@@ -169,7 +169,8 @@ for msg in st.session_state.messages:
     role = "assistant" if msg["role"] == "model" else "user"
     avatar = "🕊️" if role == "assistant" else "🌸"
     with st.chat_message(role, avatar=avatar):
-        st.markdown(msg["parts"][0])
+        text_content = msg["parts"][0] if isinstance(msg["parts"], list) else msg["parts"]
+        st.markdown(text_content)
 
 # Quick Action & Clear Chat Buttons
 st.markdown("---")
@@ -204,7 +205,7 @@ typed_prompt = st.chat_input("Share what's on your mind...")
 if typed_prompt:
     prompt_to_send = typed_prompt
 
-# Process input (from button or text box)
+# Process input
 if prompt_to_send:
     st.session_state.messages.append({"role": "user", "parts": [prompt_to_send]})
     with st.chat_message("user", avatar="🌸"):
@@ -212,12 +213,13 @@ if prompt_to_send:
 
     with st.chat_message("assistant", avatar="🕊️"):
         try:
-            response_text = generate_response_with_fallback(st.session_state.messages, prompt_to_send)
+            response_text = generate_response(st.session_state.messages)
             st.markdown(response_text)
             st.session_state.messages.append({"role": "model", "parts": [response_text]})
             st.rerun()
         except Exception as e:
-            if "429" in str(e) or "quota" in str(e).lower():
-                st.info("🌸 **A gentle reminder:** You've reached your free daily message limit across all models today. Take a quiet moment to reflect on today's scripture, and let's continue our conversation tomorrow! 🕊️")
+            err_msg = str(e).lower()
+            if "429" in err_msg or "quota" in err_msg:
+                st.info("🌸 **A gentle reminder:** You've reached your free daily message limit. Take a quiet moment to reflect on today's scripture, and let's continue our conversation tomorrow! 🕊️")
             else:
                 st.error(f"Error communicating with Gemini: {e}")
