@@ -111,7 +111,7 @@ if not api_key:
     st.stop()
 
 # Configure Gemini API
-genai.configure(api_key=api_key)
+client = genai.Client(api_key=api_key)
 
 # System Prompt with locked NIV translation
 SYSTEM_PROMPT = """
@@ -134,13 +134,10 @@ def generate_response(messages, prompt):
     
     # Pass history + system prompt in the contents request
     response = client.models.generate_content(
-        model="models/gemini-3.6-flash",
-        contents=prompt,
-        config=genai.types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT
-        )
-    )
-    return response.text
+    model="gemini-3.6-flash",
+    contents="Hello"
+)
+print(response.text)
     
     last_error = None
     
