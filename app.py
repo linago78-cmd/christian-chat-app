@@ -155,18 +155,32 @@ def format_chat_history(messages):
         )
     return formatted_contents
 
-# Generate response using gemini-3.6-flash via client.models.generate_content
+import time
+
+# Generate response using gemini-3.6-flash with retry logic for temporary 503 high-demand errors
 def generate_response(messages):
     history_contents = format_chat_history(messages)
     
-    response = client.models.generate_content(
-        model="gemini-3.6-flash",
-        contents=history_contents,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT
-        )
-    )
-    return response.text
+    max_retries = 3
+    delay = 2  # wait 2 seconds before first retry
+    
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=history_contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT
+                )
+            )
+            return response.text
+        except Exception as e:
+            err_msg = str(e)
+            if ("503" in err_msg or "UNAVAILABLE" in err_msg) and attempt < max_retries - 1:
+                time.sleep(delay)
+                delay *= 2  # wait 2s, then 4s on subsequent attempts
+            else:
+                raise e
 
 # Initialize message history
 if "messages" not in st.session_state:
