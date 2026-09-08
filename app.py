@@ -55,25 +55,38 @@ st.markdown("""
         font-weight: 450;
     }
 
-    /* CHAT INPUT FIX: Black Textbox + Bright Blue Text */
+    /* --- CHAT INPUT FIX: Black Textbox + Bright Blue Text --- */
+    
+    /* 1. Outer container background override */
+    [data-testid="stBottom"], div[data-baseweb="input"], .stChatInputContainer {
+        background-color: transparent !important;
+    }
+
+    /* 2. Main Chat Input Box Wrapper */
     [data-testid="stChatInput"] {
         background-color: #000000 !important;
         border-radius: 16px !important;
-        border: 1.5px solid #1E3A8A !important;
+        border: 2px solid #1E3A8A !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
     }
 
-    [data-testid="stChatInput"] textarea {
+    /* 3. Textarea and Baseweb inner elements */
+    [data-testid="stChatInput"] textarea,
+    [data-testid="stChatInput"] [data-baseweb="textarea"],
+    [data-testid="stChatInput"] div {
         background-color: #000000 !important;
         color: #2563EB !important; /* Bright Blue Text while typing */
-        -webkit-text-fill-color: #2563EB !important; /* Forces bright blue on mobile */
+        -webkit-text-fill-color: #2563EB !important; /* Forces bright blue on iOS/Safari */
+        caret-color: #2563EB !important; /* Bright Blue blinking cursor */
         font-size: 16px !important;
         font-weight: 600 !important;
     }
 
-    /* Input Placeholder Text */
+    /* 4. Placeholder text styling */
     [data-testid="stChatInput"] textarea::placeholder {
         color: #9CA3AF !important;
         -webkit-text-fill-color: #9CA3AF !important;
+        opacity: 1 !important;
     }
 
     /* Quick Action & Control Buttons */
@@ -111,7 +124,7 @@ if not api_key:
     st.info("Please enter your Gemini API key in the sidebar, or add GEMINI_API_KEY to Streamlit Secrets.", icon="🔑")
     st.stop()
 
-# Initialize Client using the new google-genai SDK
+# Initialize Client using modern google-genai SDK
 client = genai.Client(api_key=api_key)
 
 # System Prompt with locked NIV translation
